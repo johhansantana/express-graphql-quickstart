@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node server.babel.js"
+    "dev": "node server.babel.js",
+    "start": "NODE_ENV=production node server.babel.js"
   },
   "author": "",
   "license": "ISC",
