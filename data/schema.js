@@ -2,33 +2,99 @@ import {
   GraphQLSchema,
   GraphQLObjectType,
   GraphQLString,
-  GraphQLInt
+  GraphQLInt,
+  GraphQLList,
+  GraphQLNonNull
 } from 'graphql';
+import db from '../db';
 
-let counter = 42;
-let schema = new GraphQLSchema({
-  query: new GraphQLObjectType({
-    name: 'Query',
-    fields: () => ({
-      counter: {
-        type: GraphQLInt,
-        resolve: () => counter
+const userType = new GraphQLObjectType({
+  name: 'User',
+  fields: {
+    id: {
+      type: GraphQLInt
+    },
+    name: {
+      type: GraphQLString
+    },
+    lastName: {
+      type: GraphQLString
+
+    },
+    email: {
+      type: GraphQLString
+    },
+    password: {
+      type: GraphQLString,
+      resolve: () => null
+    },
+    createdAt: {
+      type: GraphQLString
+    }
+  }
+});
+
+const query = new GraphQLObjectType({
+  name: 'RootQuery',
+  fields: {
+    users: {
+      type: new GraphQLList(userType),
+      args: {
+        id: {
+          type: GraphQLInt
+        },
+        name: {
+          type: GraphQLString
+        },
+        lastName: {
+          type: GraphQLString
+        },
+        email: {
+          type: GraphQLString
+        },
       },
-      message: {
-        type: GraphQLString,
-        resolve: () => 'Hello Graphql!'
+      resolve: (_, args) => {
+        return db.models.user.findAll({ where: args });
       }
-    })
-  }),
-  mutation: new GraphQLObjectType({
-    name: 'Mutation',
-    fields: () => ({
-      incrementCounter: {
-        type: GraphQLInt,
-        resolve: () => ++counter
+    }
+  }
+});
+
+const mutation = new GraphQLObjectType({
+  name: 'Mutation',
+  description: 'Mutate stuff',
+  fields: {
+    addUser: {
+      type: userType,
+      args: {
+        name: {
+          type: new GraphQLNonNull(GraphQLString)
+        },
+        lastName: {
+          type: new GraphQLNonNull(GraphQLString)
+        },
+        email: {
+          type: new GraphQLNonNull(GraphQLString)
+        },
+        password: {
+          type: new GraphQLNonNull(GraphQLString)
+        }
+      },
+      resolve: (source, args) => {
+        return db.models.user.create({
+          name: args.name,
+          lastName: args.lastName,
+          email: args.email,
+          password: args.password
+        });
       }
-    })
-  })
-})
+    }
+  }
+});
+
+const schema = new GraphQLSchema({
+  query,
+  mutation
+});
 
 export default schema;
