@@ -15,6 +15,7 @@ conn
 .then(() => {
   console.log('Connection has been established successfully.');
   User.sync();
+  Article.sync();
 })
 .catch(err => {
   console.error('Unable to connect to the database:', err);
@@ -41,6 +42,20 @@ const User = conn.define('user', {
     allowNull: false
   }
 });
+
+const Article = conn.define('article', {
+  name: {
+    type: Sequelize.STRING,
+    allowNull: false
+  },
+  description: {
+    type: Sequelize.STRING,
+    allowNull: false
+  },
+});
+
+Article.belongsTo(User);
+User.hasMany(Article);
 
 export default conn;
 

@@ -8,9 +8,30 @@ import {
 } from 'graphql';
 import db from '../db';
 
+const articleType = new GraphQLObjectType({
+  name: 'Article',
+  fields: () => ({
+    id: {
+      type: GraphQLInt
+    },
+    name: {
+      type: GraphQLString
+    },
+    description: {
+      type: GraphQLString
+    },
+    createdBy: {
+      type: userType,
+      resolve(article) {
+        return article.getUser();
+      }
+    }
+  })
+});
+
 const userType = new GraphQLObjectType({
   name: 'User',
-  fields: {
+  fields: () => ({
     id: {
       type: GraphQLInt
     },
@@ -24,14 +45,16 @@ const userType = new GraphQLObjectType({
     email: {
       type: GraphQLString
     },
-    password: {
-      type: GraphQLString,
-      resolve: () => null
-    },
     createdAt: {
       type: GraphQLString
+    },
+    articles: {
+      type: new GraphQLList(articleType),
+      resolve(user) {
+        return user.getArticles();
+      }
     }
-  }
+  })
 });
 
 const query = new GraphQLObjectType({
@@ -56,8 +79,19 @@ const query = new GraphQLObjectType({
       resolve: (_, args) => {
         return db.models.user.findAll({ where: args });
       }
+    },
+    articles: {
+      type: new GraphQLList(articleType),
+      args: {
+        id: {
+          type: GraphQLInt
+        }
+      },
+      resolve: (_, args) => {
+        return db.models.article.findAll({ where: args });
+      }
     }
-  }
+  },
 });
 
 const mutation = new GraphQLObjectType({
@@ -86,6 +120,27 @@ const mutation = new GraphQLObjectType({
           lastName: args.lastName,
           email: args.email,
           password: args.password
+        });
+      }
+    },
+    addArticle: {
+      type: articleType,
+      args: {
+        name: {
+          type: new GraphQLNonNull(GraphQLString),
+        },
+        description: {
+          type: new GraphQLNonNull(GraphQLString),
+        },
+        userId: {
+          type: new GraphQLNonNull(GraphQLInt),
+        }
+      },
+      resolve: (source, args) => {
+        return db.models.article.create({
+          name: args.name,
+          description: args.description,
+          userId: args.userId
         });
       }
     }
